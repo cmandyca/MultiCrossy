@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiCrossy</title>
+    <style>
+        :root {
+            --primary-color: #5D5CDE;
+            --secondary-color: #FF9F80;
+            --bg-color: #FFFFFF;
+            --text-color: #333333;
+            --road-color: #888888;
+            --grass-color: #8BC34A;
+            --sky-color: #B3E5FC;
+            --cloud-color: #FFFFFF;
+            --sun-color: #FFEB3B;
+            --option-bg: #f0f0f0;
+            --option-hover: #e0e0e0;
+            --option-border: #cccccc;
+            --truck-color: #FF5252;
+            --tree-color: #4CAF50;
+            --tree-trunk: #795548;
+            --flower-color1: #FF4081;
+            --flower-color2: #FFEB3B;
+            --flower-color3: #FF9800;
+            --correct-glow: rgba(76, 175, 80, 0.5);
+            --incorrect-glow: rgba(244, 67, 54, 0.5);
+        }
+
+        .dark {
+            --bg-color: #181818;
+            --text-color: #f0f0f0;
+            --road-color: #555555;
+            --grass-color: #4CAF50;
+            --sky-color: #263238;
+            --cloud-color: #607D8B;
+            --sun-color: #FFC107;
+            --option-bg: #333333;
+            --option-hover: #444444;
+            --option-border: #555555;
+            --tree-color: #388E3C;
+            --tree-trunk: #5D4037;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            touch-action: manipulation;
+            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            height: 80vh;
+            max-height: 800px;
+            margin: 0 auto;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-color: var(--grass-color);
+        }
+
+        #score-display {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            z-index: 10;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+        }
+
+        #timer-display {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            z-index: 10;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            display: none;
+        }
+
+        #question-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -180%);
+            text-align: center;
+            font-size: 32px;
+            font-weight: bold;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: black;
+            padding: 15px 25px;
+            border-radius: 20px;
+            z-index: 10;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            border: 4px solid var(--primary-color);
+            max-width: 90%;
+        }
+
+        #options-container {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+            padding: 0 20px;
+            z-index: 10;
+        }
+
+        .option-btn {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 10px 25px;
+            background-color: var(--option-bg);
+            color: var(--text-color);
+            border: 4px solid var(--option-border);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 80px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .option-btn:hover, .option-btn:focus {
+            background-color: var(--option-hover);
+            transform: scale(1.05);
+        }
+
+        #game-over-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+        }
+
+        #game-over-message {
+            color: white;
+            font-size: 36px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #final-score {
+            color: white;
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #time-or-reason {
+            color: white;
+            font-size: 24px;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .game-btn {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 15px 30px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .game-btn:hover, .game-btn:focus {
+            transform: scale(1.1);
+        }
+
+        #mode-selection {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(var(--sky-color), var(--grass-color));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 30;
+        }
+
+        #mode-title {
+            font-size: 42px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 0px white;
+        }
+
+        #mode-description {
+            font-size: 20px;
+            color: #333;
+            text-align: center;
+            margin-bottom: 40px;
+            max-width: 80%;
+            text-shadow: 1px 1px 0px white;
+        }
+
+        .mode-btn {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            font-size: 26px;
+            font-weight: bold;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 80%;
+            max-width: 300px;
+            text-align: center;
+            box-shadow: 0 6px 10px rgba(0,0,0,0.3);
+            border: none;
+        }
+
+        #classic-mode-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        #challenge-mode-btn {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .mode-btn:hover, .mode-btn:focus {
+            transform: scale(1.05);
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 15;
+        }
+
+        @media (max-width: 600px) {
+            #game-container {
+                height: 70vh;
+            }
+            
+            #options-container {
+                gap: 10px;
+            }
+            
+            .option-btn {
+                font-size: 20px;
+                padding: 8px 16px;
+                min-width: 60px;
+            }
+            
+            #question-container {
+                font-size: 24px;
+                transform: translate(-50%, -160%);
+            }
+            
+            #score-display, #timer-display {
+                font-size: 18px;
+            }
+            
+            #mode-title {
+                font-size: 32px;
+            }
+            
+            #mode-description {
+                font-size: 16px;
+            }
+            
+            .mode-btn {
+                font-size: 20px;
+                padding: 12px 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div id="score-display">Score: 0</div>
+        <div id="timer-display">⏱ 100s</div>
+        <div id="question-container">Get ready!</div>
+        <div id="options-container"></div>
+        <div id="game-over-container">
+            <div id="game-over-message">Game Over!</div>
+            <div id="final-score">Score: 0</div>
+            <div id="time-or-reason"></div>
+            <button id="new-game-btn" class="game-btn">Play Again</button>
+            <button id="change-mode-btn" class="game-btn">Change Mode</button>
+        </div>
+        <div id="mode-selection">
+            <div id="mode-title">MultiCrossy</div>
+            <div id="mode-description">Choose a game mode to practice multiplication facts!</div>
+            <button id="classic-mode-btn" class="mode-btn">Classic Mode</button>
+            <button id="challenge-mode-btn" class="mode-btn">Challenge Mode ⏱ 100s</button>
+        </div>
+    </div>
+
+    <script>
+        // Check for dark mode preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+        
+        // Sound effects using Web Audio API
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioContext = new AudioContext();
+        
+        // Function to play a correct answer sound (happy chirp)
+        function playCorrectSound() {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(900, audioContext.currentTime + 0.1);
+            oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.2);
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.3);
+        }
+        
+        // Function to play an incorrect answer sound (crash)
+        function playIncorrectSound() {
+            const crashOscillator = audioContext.createOscillator();
+            const crashGain = audioContext.createGain();
+            
+            crashOscillator.type = 'sawtooth';
+            crashOscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+            crashOscillator.frequency.linearRampToValueAtTime(50, audioContext.currentTime + 0.5);
+            
+            crashGain.gain.setValueAtTime(0.3, audioContext.currentTime);
+            crashGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
+            
+            crashOscillator.connect(crashGain);
+            crashGain.connect(audioContext.destination);
+            
+            crashOscillator.start();
+            crashOscillator.stop(audioContext.currentTime + 0.8);
+            
+            // Add a noise burst for the crash
+            setTimeout(() => {
+                const noiseNode = audioContext.createBufferSource();
+                const noiseBuffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.2, audioContext.sampleRate);
+                const noise = noiseBuffer.getChannelData(0);
+                
+                for (let i = 0; i < noiseBuffer.length; i++) {
+                    noise[i] = Math.random() * 2 - 1;
+                }
+                
+                const noiseGain = audioContext.createGain();
+                noiseGain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                noiseGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                
+                noiseNode.buffer = noiseBuffer;
+                noiseNode.connect(noiseGain);
+                noiseGain.connect(audioContext.destination);
+                
+                noiseNode.start();
+            }, 100);
+        }
+        
+        // Function to play a game start sound
+        function playGameStartSound() {
+            const startOsc = audioContext.createOscillator();
+            const startGain = audioContext.createGain();
+            
+            startOsc.type = 'triangle';
+            startOsc.frequency.setValueAtTime(300, audioContext.currentTime);
+            startOsc.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.3);
+            
+            startGain.gain.setValueAtTime(0.2, audioContext.currentTime);
+            startGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
+            
+            startOsc.connect(startGain);
+            startGain.connect(audioContext.destination);
+            
+            startOsc.start();
+            startOsc.stop(audioContext.currentTime + 0.6);
+        }
+        
+        // Function to play a game over sound
+        function playGameOverSound() {
+            // Sad trombone-like sound
+            const osc1 = audioContext.createOscillator();
+            const gain1 = audioContext.createGain();
+            
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(300, audioContext.currentTime);
+            osc1.frequency.exponentialRampToValueAtTime(150, audioContext.currentTime + 0.8);
+            
+            gain1.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gain1.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.0);
+            
+            osc1.connect(gain1);
+            gain1.connect(audioContext.destination);
+            
+            osc1.start();
+            osc1.stop(audioContext.currentTime + 1.0);
+            
+            // Add a secondary oscillator for richness
+            setTimeout(() => {
+                const osc2 = audioContext.createOscillator();
+                const gain2 = audioContext.createGain();
+                
+                osc2.type = 'triangle';
+                osc2.frequency.setValueAtTime(350, audioContext.currentTime);
+                osc2.frequency.exponentialRampToValueAtTime(120, audioContext.currentTime + 0.6);
+                
+                gain2.gain.setValueAtTime(0.2, audioContext.currentTime);
+                gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.7);
+                
+                osc2.connect(gain2);
+                gain2.connect(audioContext.destination);
+                
+                osc2.start();
+                osc2.stop(audioContext.currentTime + 0.7);
+            }, 200);
+        }
+
+        // Game variables
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('score-display');
+        const timerDisplay = document.getElementById('timer-display');
+        const questionContainer = document.getElementById('question-container');
+        const optionsContainer = document.getElementById('options-container');
+        const gameOverContainer = document.getElementById('game-over-container');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const timeOrReasonDisplay = document.getElementById('time-or-reason');
+        const newGameBtn = document.getElementById('new-game-btn');
+        const changeModeBtn = document.getElementById('change-mode-btn');
+        const modeSelection = document.getElementById('mode-selection');
+        const classicModeBtn = document.getElementById('classic-mode-btn');
+        const challengeModeBtn = document.getElementById('challenge-mode-btn');
+
+        // Set canvas size
+        function resizeCanvas() {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Game state
+        let score = 0;
+        let currentQuestion = {};
+        let gameRunning = false;
+        let chickenPosition = { x: canvas.width / 2, y: canvas.height - 100 };
+        let targetPosition = { x: canvas.width / 2, y: canvas.height - 100 };
+        let roads = [];
+        let trees = [];
+        let flowers = [];
+        let clouds = [];
+        let truck = null;
+        let lastFrameTime = 0;
+        let gameSpeed = 1;
+        let gameMode = 'classic';
+        let remainingTime = 100; // 100 seconds for challenge mode
+        let timer = null;
+        let particles = [];
+        let suns = [];
+        let isFirstGame = true;
+
+        // Initialize game
+        function initGame(mode) {
+            // Set game mode if provided
+            if (mode) {
+                gameMode = mode;
+            }
+            
+            // Resume audio context if it was suspended (required for browsers that block autoplay)
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            // Play game start sound
+            playGameStartSound();
+            
+            // Hide mode selection
+            modeSelection.style.display = 'none';
+            
+            // Configure game based on mode
+            score = 0;
+            scoreDisplay.textContent = `Score: ${score}`;
+            
+            if (gameMode === 'challenge') {
+                remainingTime = 100;
+                timerDisplay.textContent = `⏱ ${remainingTime}s`;
+                timerDisplay.style.display = 'block';
+                
+                // Start timer
+                if (timer) {
+                    clearInterval(timer);
+                }
+                
+                timer = setInterval(() => {
+                    remainingTime--;
+                    timerDisplay.textContent = `⏱ ${remainingTime}s`;
+                    
+                    // Time's up
+                    if (remainingTime <= 0) {
+                        clearInterval(timer);
+                        endChallengeMode();
+                    }
+                    
+                    // Change color when time is running out
+                    if (remainingTime <= 10) {
+                        timerDisplay.style.backgroundColor = '#FF5252';
+                    } else if (remainingTime <= 30) {
+                        timerDisplay.style.backgroundColor = '#FFA726';
+                    } else {
+                        timerDisplay.style.backgroundColor = 'var(--secondary-color)';
+                    }
+                }, 1000);
+            } else {
+                timerDisplay.style.display = 'none';
+                if (timer) {
+                    clearInterval(timer);
+                    timer = null;
+                }
+            }
+            
+            gameRunning = true;
+            chickenPosition = { x: canvas.width / 2, y: canvas.height - 100 };
+            targetPosition = { x: canvas.width / 2, y: canvas.height - 100 };
+            roads = [];
+            trees = [];
+            flowers = [];
+            clouds = [];
+            suns = [];
+            particles = [];
+            
+            // Create initial roads
+            for (let i = 0; i < 5; i++) {
+                roads.push({
+                    y: canvas.height - 200 - i * 100,
+                    hue: (i * 30) % 360
+                });
+            }
+            
+            // Create some trees
+            for (let i = 0; i < 10; i++) {
+                trees.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: 30 + Math.random() * 20,
+                    type: Math.floor(Math.random() * 3)
+                });
+            }
+            
+            // Create some flowers
+            for (let i = 0; i < 20; i++) {
+                flowers.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: 5 + Math.random() * 10,
+                    color: Math.floor(Math.random() * 3),
+                    rotation: Math.random() * Math.PI * 2
+                });
+            }
+            
+            // Create some clouds
+            for (let i = 0; i < 3; i++) {
+                clouds.push({
+                    x: Math.random() * canvas.width,
+                    y: 20 + Math.random() * 100,
+                    width: 80 + Math.random() * 60,
+                    height: 40 + Math.random() * 20,
+                    speed: 0.2 + Math.random() * 0.3
+                });
+            }
+            
+            // Create the sun
+            suns.push({
+                x: canvas.width - 60,
+                y: 60,
+                radius: 30,
+                rays: 8
+            });
+            
+            truck = null;
+            lastFrameTime = 0;
+            gameSpeed = 1;
+            
+            gameOverContainer.style.display = 'none';
+            generateQuestion();
+            requestAnimationFrame(gameLoop);
+            
+            // Hide first-time instructions after first game
+            isFirstGame = false;
+        }
+        
+        // End challenge mode when time runs out
+        function endChallengeMode() {
+            if (!gameRunning) return;
+            
+            gameRunning = false;
+            
+            gameOverContainer.style.display = 'flex';
+            gameOverContainer.querySelector('#game-over-message').textContent = 'Time\'s Up!';
+            finalScoreDisplay.textContent = `Score: ${score}`;
+            timeOrReasonDisplay.textContent = `You solved ${score} problems in 100 seconds!`;
+            
+            // Play game over sound
+            playGameOverSound();
+        }
+
+        // Generate a multiplication question
+        function generateQuestion() {
+            // For elementary students, keep the numbers small
+            const num1 = Math.floor(Math.random() * 10) + 1;
+            const num2 = Math.floor(Math.random() * 10) + 1;
+            const correctAnswer = num1 * num2;
+            
+            // Generate two incorrect answers that are close to the correct answer
+            let wrongAnswer1, wrongAnswer2;
+            do {
+                wrongAnswer1 = correctAnswer + Math.floor(Math.random() * 6) - 3;
+                if (wrongAnswer1 <= 0) wrongAnswer1 = correctAnswer + 1;
+            } while (wrongAnswer1 === correctAnswer);
+            
+            do {
+                wrongAnswer2 = correctAnswer + Math.floor(Math.random() * 10) - 5;
+                if (wrongAnswer2 <= 0) wrongAnswer2 = correctAnswer + 2;
+            } while (wrongAnswer2 === correctAnswer || wrongAnswer2 === wrongAnswer1);
+            
+            // Create the current question object
+            currentQuestion = {
+                question: `${num1} × ${num2} = ?`,
+                correctAnswer,
+                options: [correctAnswer, wrongAnswer1, wrongAnswer2].sort(() => Math.random() - 0.5)
+            };
+            
+            // Update the question display
+            questionContainer.textContent = currentQuestion.question;
+            
+            // Clear previous options
+            optionsContainer.innerHTML = '';
+            
+            // Add new option buttons
+            currentQuestion.options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = option;
+                button.addEventListener('click', () => checkAnswer(option));
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        // Check if the selected answer is correct
+        function checkAnswer(selectedAnswer) {
+            if (!gameRunning) return;
+            
+            if (selectedAnswer === currentQuestion.correctAnswer) {
+                // Play correct sound
+                playCorrectSound();
+                
+                // Correct answer
+                score++;
+                scoreDisplay.textContent = `Score: ${score}`;
+                
+                // Move chicken forward
+                targetPosition.y -= 100;
+                
+                // Add new road
+                roads.push({
+                    y: roads[roads.length - 1].y - 100,
+                    hue: (roads.length * 30) % 360
+                });
+                
+                // Increase game speed slightly
+                gameSpeed += 0.05;
+                
+                // Generate a new question
+                generateQuestion();
+            } else {
+               
+                
+                // Wrong answer - spawn a truck to hit the chicken
+                const direction = Math.random() > 0.5 ? 1 : -1;
+                truck = {
+                    x: direction > 0 ? -100 : canvas.width + 100,
+                    y: chickenPosition.y,
+                    direction,
+                    speed: 10,
+                    width: 80,
+                    height: 40
+                };
+              
+              
+
+                 // Play incorrect sound
+                playIncorrectSound();
+
+                // Create error particles
+                createParticles(
+                    chickenPosition.x, 
+                    chickenPosition.y, 
+                    15, 
+                    ['#FF5252', '#FF1744', '#D50000']
+                );
+               
+            }
+        }
+
+        // Create colorful particles (for correct answers)
+        function createParticles(x, y, count, colors) {
+            for (let i = 0; i < count; i++) {
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const size = 3 + Math.random() * 5;
+                const speedX = Math.random() * 6 - 3;
+                const speedY = Math.random() * 6 - 4; // Mostly upward
+                
+                particles.push({
+                    x, y, 
+                    size,
+                    color,
+                    speedX,
+                    speedY,
+                    life: 30 + Math.random() * 30
+                });
+            }
+        }
+        
+        // Draw sky and environmental elements
+        function drawSky() {
+            // Sky gradient
+            const skyColor = getComputedStyle(document.documentElement).getPropertyValue('--sky-color');
+            ctx.fillStyle = skyColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
+            
+            // Gradient to grass
+            const gradient = ctx.createLinearGradient(0, canvas.height / 2 - 50, 0, canvas.height / 2 + 50);
+            gradient.addColorStop(0, skyColor);
+            gradient.addColorStop(1, getComputedStyle(document.documentElement).getPropertyValue('--grass-color'));
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, canvas.height / 2 - 50, canvas.width, 100);
+        }
+        
+        // Draw clouds
+        function drawClouds(deltaTime) {
+            const cloudColor = getComputedStyle(document.documentElement).getPropertyValue('--cloud-color');
+            ctx.fillStyle = cloudColor;
+            
+            clouds.forEach(cloud => {
+                // Move cloud
+                cloud.x += cloud.speed * deltaTime / 16;
+                
+                // Wrap around when off-screen
+                if (cloud.x > canvas.width + 100) {
+                    cloud.x = -cloud.width;
+                    cloud.y = 20 + Math.random() * 100;
+                }
+                
+                // Draw cloud (multiple circles)
+                ctx.beginPath();
+                ctx.arc(cloud.x, cloud.y, cloud.height/2, 0, Math.PI * 2);
+                ctx.arc(cloud.x + cloud.width * 0.3, cloud.y - cloud.height * 0.1, cloud.height/2.2, 0, Math.PI * 2);
+                ctx.arc(cloud.x + cloud.width * 0.6, cloud.y, cloud.height/1.8, 0, Math.PI * 2);
+                ctx.arc(cloud.x + cloud.width * 0.4, cloud.y + cloud.height * 0.1, cloud.height/2.5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+        
+        // Draw sun
+        function drawSun() {
+            suns.forEach(sun => {
+                // Draw sun circle
+                const sunColor = getComputedStyle(document.documentElement).getPropertyValue('--sun-color');
+                ctx.fillStyle = sunColor;
+                ctx.beginPath();
+                ctx.arc(sun.x, sun.y, sun.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw sun rays
+                ctx.strokeStyle = sunColor;
+                ctx.lineWidth = 3;
+                
+                for (let i = 0; i < sun.rays; i++) {
+                    const angle = (i / sun.rays) * Math.PI * 2;
+                    const rayLength = sun.radius * 0.7;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(
+                        sun.x + Math.cos(angle) * (sun.radius + 5),
+                        sun.y + Math.sin(angle) * (sun.radius + 5)
+                    );
+                    ctx.lineTo(
+                        sun.x + Math.cos(angle) * (sun.radius + 5 + rayLength),
+                        sun.y + Math.sin(angle) * (sun.radius + 5 + rayLength)
+                    );
+                    ctx.stroke();
+                }
+                
+                // Draw a smiley face on the sun
+                ctx.fillStyle = 'black';
+                
+                // Eyes
+                ctx.beginPath();
+                ctx.arc(sun.x - sun.radius * 0.3, sun.y - sun.radius * 0.2, sun.radius * 0.15, 0, Math.PI * 2);
+                ctx.arc(sun.x + sun.radius * 0.3, sun.y - sun.radius * 0.2, sun.radius * 0.15, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Smile
+                ctx.beginPath();
+                ctx.arc(sun.x, sun.y + sun.radius * 0.1, sun.radius * 0.5, 0.1 * Math.PI, 0.9 * Math.PI);
+                ctx.lineWidth = sun.radius * 0.1;
+                ctx.strokeStyle = 'black';
+                ctx.stroke();
+            });
+        }
+        
+        // Draw trees
+        function drawTrees() {
+            trees.forEach(tree => {
+                // Only draw trees that are visible on screen
+                if (tree.y > -100 && tree.y < canvas.height + 100) {
+                    // Tree trunk
+                    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--tree-trunk');
+                    ctx.fillRect(
+                        tree.x - tree.size * 0.1, 
+                        tree.y, 
+                        tree.size * 0.2, 
+                        tree.size * 0.8
+                    );
+                    
+                    // Tree top
+                    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--tree-color');
+                    
+                    if (tree.type === 0) {
+                        // Triangle tree (pine)
+                        ctx.beginPath();
+                        ctx.moveTo(tree.x, tree.y - tree.size);
+                        ctx.lineTo(tree.x - tree.size * 0.6, tree.y);
+                        ctx.lineTo(tree.x + tree.size * 0.6, tree.y);
+                        ctx.closePath();
+                        ctx.fill();
+                        
+                        // Second layer
+                        ctx.beginPath();
+                        ctx.moveTo(tree.x, tree.y - tree.size * 0.7);
+                        ctx.lineTo(tree.x - tree.size * 0.7, tree.y + tree.size * 0.2);
+                        ctx.lineTo(tree.x + tree.size * 0.7, tree.y + tree.size * 0.2);
+                        ctx.closePath();
+                        ctx.fill();
+                    } else if (tree.type === 1) {
+                        // Round tree
+                        ctx.beginPath();
+                        ctx.arc(tree.x, tree.y - tree.size * 0.3, tree.size * 0.6, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else {
+                        // Bush-like tree
+                        ctx.beginPath();
+                        ctx.arc(tree.x - tree.size * 0.3, tree.y - tree.size * 0.3, tree.size * 0.4, 0, Math.PI * 2);
+                        ctx.arc(tree.x + tree.size * 0.3, tree.y - tree.size * 0.3, tree.size * 0.4, 0, Math.PI * 2);
+                        ctx.arc(tree.x, tree.y - tree.size * 0.6, tree.size * 0.4, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            });
+        }
+        
+        // Draw flowers
+        function drawFlowers() {
+            const flowerColors = [
+                getComputedStyle(document.documentElement).getPropertyValue('--flower-color1'),
+                getComputedStyle(document.documentElement).getPropertyValue('--flower-color2'),
+                getComputedStyle(document.documentElement).getPropertyValue('--flower-color3')
+            ];
+            
+            flowers.forEach(flower => {
+                // Only draw flowers that are visible on screen
+                if (flower.y > -50 && flower.y < canvas.height + 50) {
+                    // Stem
+                    ctx.strokeStyle = '#4CAF50';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(flower.x, flower.y);
+                    ctx.lineTo(flower.x, flower.y + flower.size * 2);
+                    ctx.stroke();
+                    
+                    // Petals
+                    ctx.fillStyle = flowerColors[flower.color];
+                    
+                    // Draw petals based on rotation
+                    for (let i = 0; i < 5; i++) {
+                        const angle = flower.rotation + (i / 5) * Math.PI * 2;
+                        const petalX = flower.x + Math.cos(angle) * flower.size;
+                        const petalY = flower.y + Math.sin(angle) * flower.size;
+                        
+                        ctx.beginPath();
+                        ctx.arc(petalX, petalY, flower.size * 0.8, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    
+                    // Center of flower
+                    ctx.fillStyle = '#FFEB3B';
+                    ctx.beginPath();
+                    ctx.arc(flower.x, flower.y, flower.size * 0.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+        }
+        
+        // Draw particles
+        function drawParticles(deltaTime) {
+            particles.forEach((particle, index) => {
+                // Update particle position
+                particle.x += particle.speedX;
+                particle.y += particle.speedY;
+                
+                // Update particle life
+                particle.life -= deltaTime / 16;
+                
+                // Remove dead particles
+                if (particle.life <= 0) {
+                    particles.splice(index, 1);
+                    return;
+                }
+                
+                // Draw particle
+                ctx.fillStyle = particle.color;
+                ctx.globalAlpha = Math.min(1, particle.life / 30);
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            });
+        }
+        
+        // Game loop
+        function gameLoop(timestamp) {
+            // Calculate delta time
+            const deltaTime = timestamp - lastFrameTime;
+            lastFrameTime = timestamp;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw sky
+            drawSky();
+            
+            // Draw sun
+            drawSun();
+            
+            // Draw clouds
+            drawClouds(deltaTime);
+            
+            // Draw background (grass)
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--grass-color');
+            ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
+            
+            // Draw trees in the back
+            trees.forEach(tree => {
+                if (Math.random() < 0.5) {
+                    tree.y += deltaTime * 0.02 * gameSpeed;
+                    // Wrap trees when they go off screen
+                    if (tree.y > canvas.height + 100) {
+                        tree.y = -50;
+                        tree.x = Math.random() * canvas.width;
+                        tree.size = 30 + Math.random() * 20;
+                        tree.type = Math.floor(Math.random() * 3);
+                    }
+                }
+            });
+            drawTrees();
+            
+            // Draw flowers
+            flowers.forEach(flower => {
+                // Move with the scene
+                flower.y += deltaTime * 0.02 * gameSpeed;
+                // Wrap flowers when they go off screen
+                if (flower.y > canvas.height + 50) {
+                    flower.y = -20;
+                    flower.x = Math.random() * canvas.width;
+                    flower.size = 5 + Math.random() * 10;
+                    flower.color = Math.floor(Math.random() * 3);
+                    flower.rotation = Math.random() * Math.PI * 2;
+                }
+            });
+            drawFlowers();
+            
+            // Draw roads
+            drawRoads();
+            
+            // Update and draw chicken
+            updateChicken(deltaTime);
+            drawChicken();
+            
+            // Update and draw truck if exists
+            if (truck) {
+                updateTruck(deltaTime);
+                drawTruck();
+                
+                // Check for collision
+                if (checkCollision()) {
+                    gameOver();
+                    return;
+                }
+            }
+            
+            // Draw particles
+            drawParticles(deltaTime);
+            
+            if (gameRunning) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        // Draw roads
+        function drawRoads() {
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--road-color');
+            
+            roads.forEach(road => {
+                ctx.fillRect(0, road.y - 30, canvas.width, 60);
+                
+                // Draw road markings
+                ctx.fillStyle = 'white';
+                for (let i = 0; i < canvas.width; i += 50) {
+                    ctx.fillRect(i, road.y - 2, 30, 4);
+                }
+                
+                ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--road-color');
+            });
+        }
+
+        // Update chicken position
+        function updateChicken(deltaTime) {
+            // Smooth movement towards target position
+            chickenPosition.x += (targetPosition.x - chickenPosition.x) * 0.1 * deltaTime / 16;
+            chickenPosition.y += (targetPosition.y - chickenPosition.y) * 0.1 * deltaTime / 16;
+            
+            // Scroll the view if chicken moves up
+            if (chickenPosition.y < canvas.height / 2) {
+                const diff = canvas.height / 2 - chickenPosition.y;
+                chickenPosition.y += diff;
+                targetPosition.y += diff;
+                
+                // Move roads down
+                roads.forEach(road => {
+                    road.y += diff;
+                });
+            }
+        }
+
+        // Draw the chicken character
+        function drawChicken() {
+            const chickenSize = 40;
+            
+            // Body (yellow circle)
+            ctx.fillStyle = '#FFC107';
+            ctx.beginPath();
+            ctx.arc(chickenPosition.x, chickenPosition.y, chickenSize / 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Eyes
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(chickenPosition.x - 8, chickenPosition.y - 5, 7, 0, Math.PI * 2);
+            ctx.arc(chickenPosition.x + 8, chickenPosition.y - 5, 7, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(chickenPosition.x - 6, chickenPosition.y - 5, 3, 0, Math.PI * 2);
+            ctx.arc(chickenPosition.x + 6, chickenPosition.y - 5, 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Beak
+            ctx.fillStyle = '#FF9800';
+            ctx.beginPath();
+            ctx.moveTo(chickenPosition.x, chickenPosition.y);
+            ctx.lineTo(chickenPosition.x - 5, chickenPosition.y + 10);
+            ctx.lineTo(chickenPosition.x + 5, chickenPosition.y + 10);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Chicken feet
+            ctx.strokeStyle = '#FF9800';
+            ctx.lineWidth = 3;
+            
+            // Left foot
+            ctx.beginPath();
+            ctx.moveTo(chickenPosition.x - 10, chickenPosition.y + 18);
+            ctx.lineTo(chickenPosition.x - 15, chickenPosition.y + 30);
+            ctx.stroke();
+            
+            // Right foot
+            ctx.beginPath();
+            ctx.moveTo(chickenPosition.x + 10, chickenPosition.y + 18);
+            ctx.lineTo(chickenPosition.x + 15, chickenPosition.y + 30);
+            ctx.stroke();
+        }
+
+        // Update truck position
+        function updateTruck(deltaTime) {
+            truck.x += truck.direction * truck.speed * gameSpeed * deltaTime / 16;
+        }
+
+        // Draw the truck
+        function drawTruck() {
+            const truckColor = getComputedStyle(document.documentElement).getPropertyValue('--truck-color');
+            
+            // Truck body
+            ctx.fillStyle = truckColor;
+            ctx.fillRect(truck.x, truck.y - truck.height / 2, truck.width, truck.height);
+            
+            // Truck cab
+            ctx.fillStyle = '#333333';
+            if (truck.direction > 0) {
+                ctx.fillRect(truck.x + truck.width - 20, truck.y - truck.height / 2 - 15, 20, 15);
+            } else {
+                ctx.fillRect(truck.x, truck.y - truck.height / 2 - 15, 20, 15);
+            }
+            
+            // Wheels
+            ctx.fillStyle = '#333333';
+            ctx.beginPath();
+            ctx.arc(truck.x + 20, truck.y + truck.height / 2 - 5, 10, 0, Math.PI * 2);
+            ctx.arc(truck.x + truck.width - 20, truck.y + truck.height / 2 - 5, 10, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Check for collision between chicken and truck
+        function checkCollision() {
+            const chickenRadius = 20;
+            
+            // Simple circle-rectangle collision
+            const closestX = Math.max(truck.x, Math.min(chickenPosition.x, truck.x + truck.width));
+            const closestY = Math.max(truck.y - truck.height / 2, Math.min(chickenPosition.y, truck.y + truck.height / 2));
+            
+            const distanceX = chickenPosition.x - closestX;
+            const distanceY = chickenPosition.y - closestY;
+            
+            const distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
+            
+            return distanceSquared < (chickenRadius * chickenRadius);
+        }
+
+        // Game over
+        function gameOver() {
+            gameRunning = false;
+            
+            // Clear any active timer
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+            
+            // Play game over sound after a short delay (after crash sound finishes)
+            setTimeout(() => {
+                playGameOverSound();
+            }, 800);
+            
+            // Update game over display
+            gameOverContainer.querySelector('#game-over-message').textContent = 'Game Over!';
+            finalScoreDisplay.textContent = `Score: ${score}`;
+            
+            if (gameMode === 'challenge') {
+                const timeSpent = 100 - remainingTime;
+                const minutes = Math.floor(timeSpent / 60);
+                const seconds = timeSpent % 60;
+                timeOrReasonDisplay.textContent = `Time spent: ${minutes}m ${seconds}s`;
+            } else {
+                timeOrReasonDisplay.textContent = 'Wrong answer! The chicken got hit!';
+            }
+            
+            gameOverContainer.style.display = 'flex';
+        }
+
+        // Event listeners for game buttons
+        newGameBtn.addEventListener('click', () => {
+            initGame(gameMode);
+        });
+        
+        changeModeBtn.addEventListener('click', () => {
+            gameOverContainer.style.display = 'none';
+            modeSelection.style.display = 'flex';
+        });
+        
+        classicModeBtn.addEventListener('click', () => {
+            initGame('classic');
+        });
+        
+        challengeModeBtn.addEventListener('click', () => {
+            initGame('challenge');
+        });
+
+        
+        // Do not auto-start the game, show mode selection first
+        resizeCanvas();
+        modeSelection.style.display = 'flex';
+    </script>
+</body>
+</html>
