@@ -729,6 +729,14 @@
                 // Correct answer
                 score++;
                 scoreDisplay.textContent = `Score: ${score}`;
+
+                // Create celebration particles
+                createParticles(
+                    chickenPosition.x, 
+                    chickenPosition.y, 
+                    20, 
+                    ['#4CAF50', '#8BC34A', '#CDDC39', '#FFEB3B', '#FFC107']
+                );
                 
                 // Move chicken forward
                 targetPosition.y -= 100;
@@ -739,8 +747,10 @@
                     hue: (roads.length * 30) % 360
                 });
                 
-                // Increase game speed slightly
-                gameSpeed += 0.05;
+                 // Increase game speed slightly (cap at a reasonable max speed)
+                if (gameSpeed < 2.5) {
+                    gameSpeed += 0.03;
+                }
                 
                 // Generate a new question
                 generateQuestion();
